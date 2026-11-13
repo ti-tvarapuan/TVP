@@ -55,7 +55,7 @@ Copy-Item .env.example .env
 python main.py
 ```
 
-Por padrão, o servidor Flask fica disponível em `http://localhost:5000`. O modelo Whisper é carregado sob demanda na primeira requisição de legendagem. O padrão é `small` em CPU com `int8`.
+Por padrão, o servidor Flask fica disponível em `http://localhost:5000`. O modelo Whisper é carregado sob demanda na primeira requisição de legendagem. O padrão é `small` em GPU NVIDIA (`cuda`) com `float16`.
 
 ## Configuração
 
@@ -63,8 +63,8 @@ O projeto carrega as configurações do arquivo `.env` na raiz. Copie `.env.exam
 
 ```powershell
 WHISPER_MODEL=small
-WHISPER_DEVICE=cpu
-WHISPER_COMPUTE_TYPE=int8
+WHISPER_DEVICE=cuda
+WHISPER_COMPUTE_TYPE=float16
 OLLAMA_URL=http://localhost:11434
 OLLAMA_MODEL=translate:4g
 ```
@@ -75,8 +75,8 @@ OLLAMA_MODEL=translate:4g
 | `VIDEO_FOLDER` | `videos` na raiz do projeto | Pasta central dos arquivos por vídeo. |
 | `FFMPEG_BINARY` | `ffmpeg` | Executável do FFmpeg ou caminho completo para ele. |
 | `WHISPER_MODEL` | `small` | Modelo faster-whisper, por exemplo `base`, `small`, `medium` ou `large-v3`. |
-| `WHISPER_DEVICE` | `cpu` | Dispositivo do Whisper: `cpu` ou `cuda`. |
-| `WHISPER_COMPUTE_TYPE` | `int8` | Tipo de cálculo do Whisper; em GPU, normalmente use `float16`. |
+| `WHISPER_DEVICE` | `cuda` | Dispositivo do Whisper: `cpu` ou `cuda`. CUDA exige GPU NVIDIA com CUDA 12 e cuDNN 9 disponíveis. |
+| `WHISPER_COMPUTE_TYPE` | `float16` | Tipo de cálculo do Whisper; use `float16` em GPU e `int8` em CPU. |
 | `OLLAMA_URL` | `http://localhost:11434` | Endereço do servidor Ollama. |
 | `OLLAMA_MODEL` | `translate:4g` | Nome/tag do modelo instalado no Ollama. |
 
