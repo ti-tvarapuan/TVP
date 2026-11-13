@@ -1,0 +1,20 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
+
+class Config:
+    MAX_CONTENT_LENGTH = int(os.getenv("MAX_VIDEO_SIZE_MB", "2048")) * 1024 * 1024
+    VIDEO_FOLDER = Path(os.getenv("VIDEO_FOLDER", BASE_DIR.parent / "videos"))
+    UPLOAD_FOLDER = Path(os.getenv("UPLOAD_FOLDER", VIDEO_FOLDER))
+    OUTPUT_FOLDER = Path(os.getenv("OUTPUT_FOLDER", VIDEO_FOLDER))
+    FFMPEG_BINARY = os.getenv("FFMPEG_BINARY", "ffmpeg")
+    WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+    WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
+    WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "translate:4g")
