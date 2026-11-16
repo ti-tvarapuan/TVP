@@ -92,6 +92,19 @@ Resposta `200`:
 {"status":"ok"}
 ```
 
+### `POST /api/audio/extract`
+
+Extrai a primeira faixa de áudio do vídeo e responde com um MP3 (192 kbit/s) para download. Envie um vídeo no campo multipart `video` ou uma URL do YouTube no campo `url`. Para URLs, aceite `application/json` com `{"url":"https://www.youtube.com/watch?v=VIDEO_ID"}` ou um formulário multipart.
+
+Exemplos:
+
+```powershell
+curl.exe -X POST -F "video=@aula.mp4" http://localhost:5000/api/audio/extract --output aula.mp3
+curl.exe -X POST -H "Content-Type: application/json" -d '{"url":"https://www.youtube.com/watch?v=VIDEO_ID"}' http://localhost:5000/api/audio/extract --output audio.mp3
+```
+
+Formatos de upload aceitos: MP4, MOV, MKV, AVI, WebM, MPEG e MPG. O limite é controlado por `MAX_VIDEO_SIZE_MB`. A resposta é `audio/mpeg`; entradas inválidas retornam `400`, e falhas no download ou no FFmpeg retornam `502`. O vídeo e o áudio temporários são removidos quando o download da resposta termina.
+
 ### `POST /api/subtitles`
 
 Recebe um arquivo multipart no campo `video` **ou** uma URL HTTP(S) no campo `url`. Envie apenas uma das opções.

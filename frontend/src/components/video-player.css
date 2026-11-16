@@ -1,0 +1,12 @@
+.tvp-player { position: relative; display: flex; flex-direction: column; overflow: hidden; width: 100%; height: 100%; max-height: 420px; background: #151716; color: #fff; }
+.tvp-player:fullscreen { position: fixed; inset: 0; z-index: 2147483647; width: 100vw; height: 100vh; max-height: none; justify-content: center; background: #080908; }
+.tvp-player:fullscreen .tvp-player-video { flex: 1 1 auto; width: 100%; height: calc(100% - 52px); max-height: none; object-fit: contain; }
+.tvp-player-video { display: block; flex: 1; width: 100%; min-height: 0; object-fit: contain; cursor: pointer; }
+.tvp-player-controls { min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: #202722; color: #f6f7f4; }
+.tvp-control-button { width: 30px; height: 32px; display: inline-grid; flex: 0 0 auto; place-items: center; padding: 0; border: 0; border-radius: 7px; color: #e9eee9; background: transparent; cursor: pointer; transition: color .15s ease, background .15s ease; }
+.tvp-control-button:hover, .tvp-control-button:focus-visible { color: white; background: #ffffff1c; outline: none; }.tvp-control-button.is-active { color: #a9d0ad; }
+.tvp-play-button { width: 34px; height: 34px; color: #fff; background: #42664e; }.tvp-play-button:hover { background: #547d60; }
+.tvp-time { flex: 0 0 auto; color: #d5dbd5; font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }.tvp-time span { color: #818b82; }
+.tvp-seek, .tvp-volume { height: 4px; appearance: none; border-radius: 5px; background: linear-gradient(to right, #92b49a var(--seek-progress, 0%), #58635a var(--seek-progress, 0%)); cursor: pointer; }.tvp-seek { min-width: 40px; flex: 1; }.tvp-volume { width: 65px; flex: 0 0 auto; background: linear-gradient(to right, #92b49a var(--volume-progress, 100%), #58635a var(--volume-progress, 100%)); }
+.tvp-seek::-webkit-slider-thumb, .tvp-volume::-webkit-slider-thumb { width: 11px; height: 11px; appearance: none; border: 2px solid #fff; border-radius: 50%; background: #6d9a75; }.tvp-seek::-moz-range-thumb, .tvp-volume::-moz-range-thumb { width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; background: #6d9a75; }
+@media (max-width: 520px) { .tvp-player-controls { min-height: 48px; gap: 7px; padding-inline: 9px; }.tvp-volume { width: 42px; }.tvp-time { font-size: 9px; } }

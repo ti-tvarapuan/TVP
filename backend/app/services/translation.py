@@ -10,7 +10,7 @@ class OllamaTranslator:
         self.client = Client(host=base_url.rstrip("/"))
         self.model = model
 
-    def translate(self, text: str) -> str:
+    def translate(self, text: str, target_language: str = "Portuguese") -> str:
         if not text.strip():
             return ""
         try:
@@ -19,8 +19,8 @@ class OllamaTranslator:
                 messages=[{
                     "role": "user",
                     "content": (
-                        "Translate the following English subtitle into natural Brazilian Portuguese. "
-                        "Preserve meaning, names, and concise subtitle style. Return only the translation.\n\n"
+                        f"Translate the following subtitle into {target_language}. "
+                        "Detect its source language automatically. Preserve meaning, names, and concise subtitle style. Return only the translation.\n\n"
                         f"{text}"
                     ),
                 }],
@@ -35,7 +35,4 @@ class OllamaTranslator:
 
     def translate_segments(self, segments: list[dict]) -> list[dict]:
         # Mantém os tempos de cada segmento do Whisper.
-        return [
-            {**segment, "text": self.translate(segment["text"])}
-            for segment in segments
-        ]
+        return [{**segment, "text": self.translate(segment["text"])} for segment in segments]

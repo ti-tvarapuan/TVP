@@ -4,20 +4,18 @@ services:
       context: ./backend
     gpus: all
     environment:
-      VIDEO_FOLDER: /app/videos
+      VIDEO_FOLDER: /app/ram/videos
       FFMPEG_BINARY: ffmpeg
-      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      WHISPER_MODEL: ${WHISPER_MODEL:-large-v3-turbo}
       WHISPER_DEVICE: ${WHISPER_DEVICE:-cuda}
       WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-float16}
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-translategemma:4b}
       MAX_VIDEO_SIZE_MB: ${MAX_VIDEO_SIZE_MB:-2048}
     volumes:
-      # Bind mount da pasta videos do projeto: os arquivos sobrevivem ao ciclo de vida do container.
-      - type: bind
-        source: ./videos
-        target: /app/videos
       - whisper_cache:/root/.cache/huggingface
+    tmpfs:
+      - /app/ram:rw,size=4g
     expose:
       - "5000"
     depends_on:
@@ -35,6 +33,7 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    gpus: all
     environment:
       OLLAMA_CONTEXT_LENGTH: 2048
       OLLAMA_NUM_PARALLEL: 1

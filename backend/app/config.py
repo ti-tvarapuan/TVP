@@ -13,7 +13,7 @@ class Config:
     UPLOAD_FOLDER = Path(os.getenv("UPLOAD_FOLDER", VIDEO_FOLDER))
     OUTPUT_FOLDER = Path(os.getenv("OUTPUT_FOLDER", VIDEO_FOLDER))
     FFMPEG_BINARY = os.getenv("FFMPEG_BINARY", "ffmpeg")
-    WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+    WHISPER_MODEL = os.getenv("WHISPER_MODEL", "large-v3-turbo")
     WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cuda")
     WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "float16")
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
