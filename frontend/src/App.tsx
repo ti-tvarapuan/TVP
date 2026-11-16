@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { AudioLines, Captions, Download, Link2 } from "lucide-react"
+import { AudioLines, Captions, Download, Link2, Upload, X } from "lucide-react"
 import { SiteHeader } from "@/components/brand"
 import { VideoResult } from "@/components/video-result"
 import { VideoUploader } from "@/components/video-uploader"
@@ -16,8 +16,11 @@ export function App() {
   const [error, setError] = useState("")
   const [youtubeUrl, setYoutubeUrl] = useState("")
   const [targetLanguage, setTargetLanguage] = useState("Portuguese")
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [downloadOnly, setDownloadOnly] = useState(false)
 
   const handleFile = useCallback(async (file: File) => {
+    setDownloadOnly(false)
     setBusy(true)
     setError("")
     setJob(null)
@@ -34,9 +37,10 @@ export function App() {
 
   const handleYoutube = async (action: "video" | "audio" | "subtitles") => {
     setBusy(true)
+    setDownloadOnly(action !== "subtitles")
     setError("")
     const actionMessage = action === "video" ? "Baixando vídeo…" : action === "audio" ? "Extraindo áudio…" : "Preparando vídeo do YouTube…"
-    setProgress({ stage: "downloading", progress: 2, message: actionMessage })
+    setProgress({ stage: action === "subtitles" ? "downloading" : "download_only", progress: 0, message: actionMessage })
     try {
       if (action === "video") {
         await downloadYoutube(youtubeUrl)
@@ -64,7 +68,7 @@ export function App() {
       <section className="workspace" aria-label="Baixar ou legendar mídia">
         {job ? <VideoResult job={job} name={fileName} language={targetLanguage} onReset={() => { setJob(null); setFileName(""); setError("") }} /> : <>
           <div className="youtube-form">
-            <label htmlFor="youtube-url"><Link2 size={16} /> Link do YouTube</label>
+            <div className="youtube-heading"><label htmlFor="youtube-url"><Link2 size={16} /> Link do YouTube</label><button className="local-upload-trigger" onClick={() => setUploadOpen(true)} disabled={busy}><Upload size={15} /> Do dispositivo</button></div>
             <input id="youtube-url" value={youtubeUrl} onChange={(event) => setYoutubeUrl(event.target.value)} placeholder="Cole a URL do vídeo" disabled={busy} />
             <label className="language-select" htmlFor="target-language">Idioma da legenda
               <select id="target-language" value={targetLanguage} onChange={(event) => setTargetLanguage(event.target.value)} disabled={busy}>
@@ -76,14 +80,22 @@ export function App() {
               <button disabled={busy || !youtubeUrl.trim()} onClick={() => void handleYoutube("video")}><Download size={15} /> Vídeo</button>
               <button disabled={busy || !youtubeUrl.trim()} onClick={() => void handleYoutube("audio")}><AudioLines size={15} /> Áudio</button>
             </div>
-            {busy && <p className="form-status" role="status">{progress.message} {progress.progress > 0 ? `${progress.progress}%` : ""}</p>}
+            {busy && <div className="processing-progress youtube-progress" role="status" aria-live="polite">
+              <div className="progress-copy"><span>{progress.message}</span>{!downloadOnly && <strong>{progress.progress}%</strong>}</div>
+              <div className={`progress-track${downloadOnly ? " is-indeterminate" : ""}`} role="progressbar" aria-label="Progresso do processamento" aria-valuemin={0} aria-valuemax={100} {...(!downloadOnly ? { "aria-valuenow": progress.progress } : {})}><span style={downloadOnly ? undefined : { width: `${progress.progress}%` }} /></div>
+              <div className="progress-stages">{downloadOnly ? <><span className="done">Download</span><span>Preparação</span></> : <><span className={progress.progress >= 15 ? "done" : ""}>Áudio</span><span className={progress.progress >= 30 ? "done" : ""}>Transcrição</span><span className={progress.progress >= 65 ? "done" : ""}>Tradução</span></>}</div>
+            </div>}
           </div>
-
-          <div className="or-divider"><span>ou</span></div>
-          <VideoUploader onFile={handleFile} busy={busy} progress={progress} />
         </>}
         {error && <p className="inline-error main-error" role="alert">{error}</p>}
       </section>
+
+      {uploadOpen && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setUploadOpen(false) }}>
+        <section className="upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
+          <div className="modal-heading"><h2 id="upload-modal-title">Enviar vídeo ou áudio</h2><button className="modal-close" aria-label="Fechar" onClick={() => setUploadOpen(false)}><X size={18} /></button></div>
+          <VideoUploader onFile={(file) => { setUploadOpen(false); void handleFile(file) }} busy={busy} progress={progress} />
+        </section>
+      </div>}
 
       <section className="about-section" id="sobre">
         <span className="eyebrow">SOBRE A TVP</span>
