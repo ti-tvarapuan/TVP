@@ -1,6 +1,6 @@
 # API de legendagem de vídeos
 
-API Flask que recebe um vídeo em inglês, extrai o áudio com FFmpeg, transcreve a fala com faster-whisper e traduz os segmentos para português brasileiro pelo cliente Python oficial do Ollama (`ollama`), usando por padrão o modelo `translate:4g`. A API fornece o vídeo original e a legenda WebVTT, além de um endpoint para baixar uma cópia MP4 com a legenda incorporada como faixa selecionável.
+API Flask para legendar vídeos e traduzir documentos. Vídeos passam por extração de áudio com FFmpeg, transcrição com faster-whisper e tradução com TranslateGemma no Ollama. Documentos TXT e PDF com texto selecionável podem ser enviados para tradução direta. O modelo padrão é `translategemma:4b`.
 
 ## Como funciona
 
@@ -18,15 +18,15 @@ O processamento é síncrono: a requisição permanece aberta durante o download
 - Python 3.10 ou superior
 - FFmpeg instalado e disponível no `PATH`
 - Ollama instalado e em execução
-- Modelo de tradução disponível no Ollama (padrão configurado: `translate:4g`)
+- Modelo TranslateGemma disponível no Ollama (padrão configurado: `translategemma:4b`)
 - Dependências Python listadas em `requirements.txt`
 
 ### 1. Instale o Ollama e baixe o modelo
 
-Instale o Ollama para o seu sistema operacional pelo [site oficial](https://ollama.com/download), inicie o serviço e baixe o modelo:
+Instale o Ollama pelo [site oficial](https://ollama.com/download), inicie o serviço e baixe o [TranslateGemma](https://ollama.com/library/translategemma) na variante padrão de 4 bilhões de parâmetros:
 
 ```powershell
-ollama pull translate:4g
+ollama pull translategemma:4b
 ```
 
 Confira se o modelo está disponível com `ollama list`. Se o nome/tag do modelo que você pretende usar for diferente, atualize `OLLAMA_MODEL` no arquivo `.env`.
@@ -66,19 +66,23 @@ WHISPER_MODEL=small
 WHISPER_DEVICE=cuda
 WHISPER_COMPUTE_TYPE=float16
 OLLAMA_URL=http://localhost:11434
-OLLAMA_MODEL=translate:4g
+OLLAMA_MODEL=translategemma:4b
 ```
 
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
 | `MAX_VIDEO_SIZE_MB` | `2048` | Tamanho máximo de upload ou download por vídeo, em MB. |
+| `MAX_DOCUMENT_SIZE_MB` | `25` | Tamanho máximo de cada arquivo TXT ou PDF, em MB. |
+| `MAX_DOCUMENT_CHARACTERS` | `500000` | Máximo de caracteres extraídos do documento. |
+| `MAX_DOCUMENT_PAGES` | `500` | Máximo de páginas processadas em um PDF. |
+| `TRANSLATION_CHUNK_CHARACTERS` | `2500` | Tamanho aproximado dos blocos enviados ao TranslateGemma. |
 | `VIDEO_FOLDER` | `videos` na raiz do projeto | Pasta central dos arquivos por vídeo. |
 | `FFMPEG_BINARY` | `ffmpeg` | Executável do FFmpeg ou caminho completo para ele. |
 | `WHISPER_MODEL` | `small` | Modelo faster-whisper, por exemplo `base`, `small`, `medium` ou `large-v3`. |
 | `WHISPER_DEVICE` | `cuda` | Dispositivo do Whisper: `cpu` ou `cuda`. CUDA exige GPU NVIDIA com CUDA 12 e cuDNN 9 disponíveis. |
 | `WHISPER_COMPUTE_TYPE` | `float16` | Tipo de cálculo do Whisper; use `float16` em GPU e `int8` em CPU. |
 | `OLLAMA_URL` | `http://localhost:11434` | Endereço do servidor Ollama. |
-| `OLLAMA_MODEL` | `translate:4g` | Nome/tag do modelo instalado no Ollama. |
+| `OLLAMA_MODEL` | `translategemma:4b` | Nome/tag do modelo instalado no Ollama. |
 
 ## Endpoints
 
@@ -91,6 +95,38 @@ Resposta `200`:
 ```json
 {"status":"ok"}
 ```
+
+### `POST /api/documents/translate`
+
+Recebe um arquivo `.txt` ou `.pdf` pelo campo multipart `file` e retorna a tradução em JSON. O TXT precisa estar codificado em UTF-8. PDFs precisam conter texto selecionável; arquivos escaneados devem passar por OCR antes de serem enviados. O PDF de entrada é convertido para texto e a resposta não tenta reproduzir a formatação ou as imagens do documento original.
+
+Campos multipart opcionais:
+
+| Campo | Padrão | Descrição |
+| --- | --- | --- |
+| `target_language` | `Portuguese` | Idioma de destino, por exemplo `English`, `Spanish` ou `Japanese`. |
+| `source_language` | `auto` | Idioma de origem, detectado pelo modelo por padrão. Também pode ser informado, como `English`. |
+
+Exemplos:
+
+```powershell
+curl.exe -X POST -F "file=@documento.txt" -F "target_language=Portuguese" http://localhost:5000/api/documents/translate
+curl.exe -X POST -F "file=@relatorio.pdf" -F "source_language=English" -F "target_language=Portuguese" http://localhost:5000/api/documents/translate
+```
+
+Resposta `200`:
+
+```json
+{
+  "filename": "relatorio.pdf",
+  "source_format": "pdf",
+  "source_language": "English",
+  "target_language": "Portuguese",
+  "translated_text": "Texto traduzido..."
+}
+```
+
+O texto longo é dividido em blocos para tradução, mantendo os parágrafos. Os limites de arquivo, páginas, caracteres extraídos e tamanho aproximado dos blocos são configuráveis pelas variáveis `MAX_DOCUMENT_SIZE_MB`, `MAX_DOCUMENT_PAGES`, `MAX_DOCUMENT_CHARACTERS` e `TRANSLATION_CHUNK_CHARACTERS`. Erros de entrada retornam `400`, limites excedidos retornam `413`, e falhas do Ollama retornam `502`.
 
 ### `POST /api/audio/extract`
 
@@ -216,11 +252,14 @@ O endpoint aceita somente arquivos existentes na pasta do vídeo dentro de `vide
 app/
   __init__.py              # fábrica da aplicação Flask
   config.py                # configurações por variáveis de ambiente
-  routes.py                # endpoints HTTP
+  routes.py                # endpoints HTTP de vídeo e áudio
+  document_routes.py       # endpoint de tradução de documentos
   services/
     media.py               # extração do áudio com FFmpeg
     transcription.py       # transcrição com faster-whisper
-    translation.py         # tradução usando o cliente Python ollama
+    translation.py         # tradução com TranslateGemma pelo cliente Ollama
+    documents.py           # leitura e validação de TXT e PDF
+    document_translation.py # tradução de documentos em blocos
     subtitles.py           # formatação e gravação WebVTT
     video.py               # incorporação da faixa de legenda no MP4
 main.py                    # inicialização do servidor

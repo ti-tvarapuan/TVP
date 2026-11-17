@@ -139,7 +139,12 @@ def create_subtitles():
             yield _sse("progress", {"stage": "translating", "progress": 65, "message": f"Traduzindo para {target_language}…"})
             translated = []
             for index, segment in enumerate(segments, start=1):
-                translated.append({**segment, "text": translator.translate(segment["text"], target_language)})
+                translated.append({
+                    **segment,
+                    "text": translator.translate(
+                        segment["text"], target_language, content_type="subtitle"
+                    ),
+                })
                 progress = index / len(segments)
                 yield _sse("progress", {"stage": "translating", "progress": round(65 + progress * 30), "message": f"Traduzindo para {target_language}…"})
             save_vtt(to_vtt(translated), vtt_path)

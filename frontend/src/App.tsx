@@ -3,6 +3,7 @@ import { AudioLines, Captions, Download, Link2, Upload, X } from "lucide-react"
 import { SiteHeader } from "@/components/brand"
 import { VideoResult } from "@/components/video-result"
 import { VideoUploader } from "@/components/video-uploader"
+import { DocumentTranslator } from "@/components/document-translator"
 import { downloadYoutube, downloadYoutubeAudio, transcribeVideo, type ProcessingProgress } from "@/features/transcription/api"
 import type { TranscriptionJob } from "@/features/transcription/types"
 
@@ -89,6 +90,8 @@ export function App() {
         </>}
         {error && <p className="inline-error main-error" role="alert">{error}</p>}
       </section>
+
+      <DocumentTranslator />
 
       {uploadOpen && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setUploadOpen(false) }}>
         <section className="upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
